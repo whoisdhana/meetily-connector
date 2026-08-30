@@ -1,0 +1,37 @@
+# meetily-connector configuration
+# Install to ~/.meetily-connector/config.toml (chmod 600).
+# Every key can be overridden with MEETILY_CONNECTOR_<FIELD>=... env vars.
+# Secrets NEVER go in this file — point at where they live instead.
+
+[meetily]
+# Empty = auto-discover from known Meetily install locations.
+db_path = ""
+
+[watch]
+poll_interval_seconds = 30
+# Meetings shorter than this are skipped (accidental recordings).
+min_duration_seconds = 60
+# Where meeting.completed payloads are POSTed. Required for watch mode.
+# https:// always allowed; plain http:// only to 127.0.0.1/localhost.
+webhook_url = "http://127.0.0.1:8644/webhooks/meetily-meeting"
+# Set true ONLY if you understand you'd be sending transcripts in cleartext.
+allow_insecure_transport = false
+max_payload_bytes = 1000000
+# Optional hint passed through to the receiver (e.g. "ta-en-mixed").
+language_hint = ""
+
+# HMAC signing secret for the webhook. Pick ONE source:
+#   env      — read from the env var named by secret_env
+#   keychain — macOS: security find-generic-password -s <service> -w
+#   file     — a file that must be chmod 600
+secret_source = "env"
+secret_env = "MEETILY_WEBHOOK_SECRET"
+secret_keychain_service = "meetily-webhook"
+secret_keychain_account = ""
+secret_file = ""
+
+[retry]
+base_seconds = 30
+max_seconds = 3600
+# 0 = retry transient failures forever (e.g. receiver offline).
+max_attempts = 0

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meetily-connector"
+version = "0.1.0"
+description = "Bridge Meetily meeting transcripts to any agent: stdio MCP server + webhook watcher"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = []
+keywords = ["meetily", "mcp", "meetings", "transcription", "webhook"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+]
+
+[project.scripts]
+meetily-mcp = "meetily_connector.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
