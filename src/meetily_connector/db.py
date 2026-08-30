@@ -177,6 +177,26 @@ class MeetilyDB:
         return [self._meeting_row(r, with_result=True)
                 for r in rows if r["id"] not in seen_ids]
 
+    def transcript_ready_unsent(self, seen_ids: set[str]) -> list[MeetingRow]:
+        """Meetings whose transcript exists, excluding already-handled ids.
+
+        Trigger mode "transcript": upstream writes the meeting row and ALL its
+        segments in one transaction when the recording stops, so transcript
+        presence means the meeting is finished — no summary generation needed.
+        A summary row is joined opportunistically if one happens to exist.
+        """
+        rows = self._execute(
+            "SELECT m.id, m.title, m.created_at, m.updated_at, m.folder_path, "
+            "       sp.status AS summary_status, sp.updated_at AS summary_updated_at, "
+            "       sp.result AS summary_result "
+            "FROM meetings m "
+            "LEFT JOIN summary_processes sp ON sp.meeting_id = m.id "
+            "WHERE EXISTS (SELECT 1 FROM transcripts t WHERE t.meeting_id = m.id) "
+            "ORDER BY m.created_at",
+        )
+        return [self._meeting_row(r, with_result=True)
+                for r in rows if r["id"] not in seen_ids]
+
     def counts(self) -> dict[str, int]:
         out = {}
         for label, sql in {

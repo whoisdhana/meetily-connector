@@ -36,9 +36,14 @@ class Config:
     db_path: str = ""  # empty = auto-discover from DB_CANDIDATES
 
     # [watch]
+    # trigger "summary": fire when Meetily's summary completes (needs the user
+    # to run summary generation). trigger "transcript": fire when the transcript
+    # is saved, i.e. as soon as the recording stops — Meetily's summary engine
+    # is never needed.
+    trigger: str = "summary"
     poll_interval_seconds: int = 30
     min_duration_seconds: int = 60
-    settle_seconds: int = 30  # summary must be this old before firing
+    settle_seconds: int = 30  # trigger row must be this old before firing
     webhook_url: str = ""
     allow_insecure_transport: bool = False
     max_payload_bytes: int = 1_000_000
@@ -82,6 +87,7 @@ class Config:
 _SECTION_KEYS = {
     "meetily": {"db_path": "db_path"},
     "watch": {
+        "trigger": "trigger",
         "poll_interval_seconds": "poll_interval_seconds",
         "min_duration_seconds": "min_duration_seconds",
         "settle_seconds": "settle_seconds",
@@ -154,6 +160,10 @@ def _apply_env(cfg: Config) -> None:
 
 
 def _validate(cfg: Config) -> None:
+    if cfg.trigger not in ("summary", "transcript"):
+        raise ConfigError(
+            f"trigger must be 'summary' or 'transcript', got {cfg.trigger!r}"
+        )
     if cfg.secret_source not in ("env", "keychain", "file"):
         raise ConfigError(
             f"secret_source must be env|keychain|file, got {cfg.secret_source!r}"

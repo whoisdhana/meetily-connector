@@ -72,3 +72,33 @@ def test_dry_run_writes_no_state(cfg, capsys):
         assert '"meeting.completed"' in out
     finally:
         store.close()
+
+
+def test_transcript_trigger_fires_without_summary(cfg):
+    cfg.trigger = "transcript"
+    store = StateStore(cfg)
+    try:
+        detected = tick(cfg, store)
+        queued = {m for m, _, _ in store.due()}
+        # Fires on transcript presence alone: PENDING, failed, and
+        # never-summarized meetings all qualify; only the 40s trivial one is
+        # skipped. Meeting rows are hours old, so all are settled.
+        assert queued == {"meeting-done", "meeting-pending", "meeting-failed",
+                          "meeting-fresh", "meeting-huge", "meeting-nosummary"}
+        assert detected == 6
+        assert "meeting-trivial" in store.seen_meeting_ids()
+    finally:
+        store.close()
+
+
+def test_transcript_trigger_payload_has_null_summary(cfg):
+    cfg.trigger = "transcript"
+    from meetily_connector.db import MeetilyDB
+
+    with MeetilyDB(cfg.resolve_db_path()) as db:
+        meeting = db.transcript_ready_unsent(set())
+        target = next(m for m in meeting if m.id == "meeting-nosummary")
+        text, duration = db.get_transcript_text(target.id)
+    payload = build_payload(cfg, target, text, duration)
+    assert payload["meetily_summary"]["status"] is None
+    assert payload["meetily_summary"]["result"] is None

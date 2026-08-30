@@ -72,8 +72,8 @@ def build_payload(cfg: Config, meeting: MeetingRow,
     }
 
 
-def _settled(meeting: MeetingRow, settle_seconds: int) -> bool:
-    updated = parse_meetily_datetime(meeting.summary_updated_at)
+def _settled(timestamp: str | None, settle_seconds: int) -> bool:
+    updated = parse_meetily_datetime(timestamp)
     if updated is None:
         return True  # unparseable timestamp: don't wedge the meeting forever
     return datetime.now(timezone.utc) - updated >= timedelta(seconds=settle_seconds)
@@ -91,9 +91,17 @@ def tick(cfg: Config, store: StateStore, dry_run: bool = False) -> int:
     detected = 0
     try:
         with MeetilyDB(db_path) as db:
-            candidates = db.completed_unsent(store.seen_meeting_ids())
+            seen = store.seen_meeting_ids()
+            if cfg.trigger == "transcript":
+                candidates = db.transcript_ready_unsent(seen)
+            else:
+                candidates = db.completed_unsent(seen)
             for meeting in candidates:
-                if not _settled(meeting, cfg.settle_seconds):
+                # Settle on whichever row is the trigger: the meeting row
+                # itself in transcript mode, the summary row in summary mode.
+                settle_ts = (meeting.updated_at if cfg.trigger == "transcript"
+                             else meeting.summary_updated_at)
+                if not _settled(settle_ts, cfg.settle_seconds):
                     continue  # re-examined next tick
                 transcript, duration = db.get_transcript_text(meeting.id)
                 if duration < cfg.min_duration_seconds or not transcript.strip():

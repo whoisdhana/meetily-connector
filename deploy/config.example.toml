@@ -8,6 +8,12 @@
 db_path = ""
 
 [watch]
+# When to fire:
+#   "summary"    - after Meetily's own summary generation completes (requires
+#                  running Meetily's summary model per meeting)
+#   "transcript" - as soon as the recording stops and the transcript is saved;
+#                  Meetily's summary engine is never needed
+trigger = "summary"
 poll_interval_seconds = 30
 # Meetings shorter than this are skipped (accidental recordings).
 min_duration_seconds = 60

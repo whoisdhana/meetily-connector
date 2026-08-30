@@ -46,3 +46,12 @@ def test_secret_file_mode_enforced(tmp_path):
         resolve_secret("file", file_path=str(f))
     os.chmod(f, 0o600)
     assert resolve_secret("file", file_path=str(f)) == "topsecret"
+
+
+def test_trigger_validation(tmp_path):
+    p = tmp_path / "config.toml"
+    p.write_text("[watch]\ntrigger = 'transcript'\n")
+    assert load_config(p).trigger == "transcript"
+    p.write_text("[watch]\ntrigger = 'sumary'\n")
+    with pytest.raises(ConfigError, match="trigger must be"):
+        load_config(p)

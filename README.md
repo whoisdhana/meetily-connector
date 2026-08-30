@@ -44,7 +44,10 @@ meetily-mcp init --launchd           # render a launchd plist for macOS autostar
 
 Behavior:
 
-- Fires only when Meetily's own summary generation reports **completed**.
+- Two trigger modes: `trigger = "summary"` fires when Meetily's own summary
+  generation reports **completed**; `trigger = "transcript"` fires as soon as
+  the recording stops and the transcript is saved — no Meetily summary model
+  needed (useful when the receiver does its own LLM pass anyway).
 - Skips trivial recordings (`min_duration_seconds`).
 - Durable outbox: if the receiver is down, payloads queue in the connector's own
   SQLite and retry with exponential backoff — forever by default for transient
