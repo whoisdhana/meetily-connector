@@ -28,6 +28,12 @@ gateway:
         port: 8644
 ```
 
+**Config location quirk (v0.20.6):** the running gateway reads
+`gateway.platforms.webhook`, but the `hermes webhook ...` CLI reads top-level
+`platforms.webhook`. Add the block in BOTH places (keep host/port in sync) or
+`hermes webhook subscribe` will claim the platform is disabled while the
+adapter is in fact listening.
+
 Restart and verify:
 
 ```sh
@@ -121,9 +127,14 @@ existing stdio server so the API token comes from the Keychain at spawn time
 mkdir -p ~/.hermes/bin
 cat > ~/.hermes/bin/hermesnag-mcp.sh <<'EOF'
 #!/bin/sh
-# HermesNag MCP launcher: token from login Keychain -> process env only.
-HERMESNAG_TOKEN="$(security find-generic-password -a hermesnag -s hermesnag-token -w)" \
-  exec "$HOME/HermesNag/hermes-tool/run-server.sh"
+# HermesNag MCP launcher (Mac side).
+# run-server.sh expects the server box's ~/apps/hermes-nag/.env, which doesn't
+# exist on the Mac — so exec server.py directly. Token comes from the login
+# Keychain into process env only.
+HERMESNAG_TOKEN="$(security find-generic-password -a hermesnag -s hermesnag-token -w)" || exit 1
+export HERMESNAG_TOKEN
+export HERMESNAG_URL="http://127.0.0.1:8787"
+exec /usr/bin/env python3 "$HOME/HermesNag/hermes-tool/server.py"
 EOF
 chmod 700 ~/.hermes/bin/hermesnag-mcp.sh
 

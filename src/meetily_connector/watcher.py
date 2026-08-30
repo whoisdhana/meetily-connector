@@ -12,7 +12,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from . import __version__
-from .config import Config
+from .config import Config, ConfigError
 from .db import DatabaseBusy, MeetilyDB, MeetingRow, parse_meetily_datetime
 from .logging_setup import log_event
 from .outbox import StateStore
@@ -81,7 +81,13 @@ def _settled(meeting: MeetingRow, settle_seconds: int) -> bool:
 
 def tick(cfg: Config, store: StateStore, dry_run: bool = False) -> int:
     """One poll cycle. Returns number of meetings newly detected."""
-    db_path = cfg.resolve_db_path()
+    try:
+        db_path = cfg.resolve_db_path()
+    except ConfigError:
+        # Meetily not installed or DB not created yet: keep polling quietly
+        # rather than crash-looping under launchd.
+        log_event("tick.no_database")
+        return 0
     detected = 0
     try:
         with MeetilyDB(db_path) as db:

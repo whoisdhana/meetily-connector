@@ -17,10 +17,12 @@ DEFAULT_CONFIG_DIR = Path("~/.meetily-connector").expanduser()
 DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_DIR / "config.toml"
 
 # Known locations of Meetily's DB; auto-discovery probes these in order.
+# Verified v0.4.0: the active file is meeting_minutes.sqlite in the app data
+# dir (identifier com.meetily.ai); meeting_minutes.db is a legacy import
+# source only — never read it (docs/schema-notes.md).
 DB_CANDIDATES = [
-    "~/Library/Application Support/com.meetily.ai/meeting_minutes.db",
-    "~/Library/Application Support/Meetily/meeting_minutes.db",
-    "~/.config/meetily/meeting_minutes.db",
+    "~/Library/Application Support/com.meetily.ai/meeting_minutes.sqlite",
+    "~/.config/meetily/meeting_minutes.sqlite",  # linux
 ]
 
 
