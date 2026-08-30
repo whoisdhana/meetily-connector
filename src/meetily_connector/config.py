@@ -54,6 +54,21 @@ class Config:
     secret_keychain_account: str = ""
     secret_file: str = ""
 
+    # [transcribe] — optional cloud re-transcription of the meeting audio.
+    # "meetily": use the transcript Meetily produced locally (default).
+    # "gemini": send the recording to Gemini Transcribe and use its output;
+    #           falls back to the local transcript if the API call fails.
+    transcriber: str = "meetily"
+    gemini_model: str = "gemini-3.5-transcribe"
+    gemini_language_codes: list = field(default_factory=list)  # [] = auto-detect
+    gemini_diarization: bool = True  # auto-disabled for recordings > 30 min
+    gemini_custom_vocabulary: list = field(default_factory=list)
+    gemini_key_source: str = "env"  # env | keychain | file
+    gemini_key_env: str = "GEMINI_API_KEY"
+    gemini_key_keychain_service: str = "gemini-api-key"
+    gemini_key_keychain_account: str = ""
+    gemini_key_file: str = ""
+
     # [retry]
     retry_base_seconds: int = 30
     retry_max_seconds: int = 3600
@@ -101,6 +116,18 @@ _SECTION_KEYS = {
         "secret_keychain_account": "secret_keychain_account",
         "secret_file": "secret_file",
     },
+    "transcribe": {
+        "transcriber": "transcriber",
+        "gemini_model": "gemini_model",
+        "gemini_language_codes": "gemini_language_codes",
+        "gemini_diarization": "gemini_diarization",
+        "gemini_custom_vocabulary": "gemini_custom_vocabulary",
+        "gemini_key_source": "gemini_key_source",
+        "gemini_key_env": "gemini_key_env",
+        "gemini_key_keychain_service": "gemini_key_keychain_service",
+        "gemini_key_keychain_account": "gemini_key_keychain_account",
+        "gemini_key_file": "gemini_key_file",
+    },
     "retry": {
         "base_seconds": "retry_base_seconds",
         "max_seconds": "retry_max_seconds",
@@ -142,8 +169,8 @@ def _apply_toml(cfg: Config, data: dict, config_path: Path) -> None:
 
 def _apply_env(cfg: Config) -> None:
     for f in fields(Config):
-        if f.name == "state_dir":
-            continue
+        if f.name == "state_dir" or f.type == "list":
+            continue  # list-valued keys are TOML-only
         env_name = f"MEETILY_CONNECTOR_{f.name.upper()}"
         raw = os.environ.get(env_name)
         if raw is None:
@@ -167,6 +194,14 @@ def _validate(cfg: Config) -> None:
     if cfg.secret_source not in ("env", "keychain", "file"):
         raise ConfigError(
             f"secret_source must be env|keychain|file, got {cfg.secret_source!r}"
+        )
+    if cfg.transcriber not in ("meetily", "gemini"):
+        raise ConfigError(
+            f"transcriber must be 'meetily' or 'gemini', got {cfg.transcriber!r}"
+        )
+    if cfg.gemini_key_source not in ("env", "keychain", "file"):
+        raise ConfigError(
+            f"gemini_key_source must be env|keychain|file, got {cfg.gemini_key_source!r}"
         )
     if cfg.poll_interval_seconds < 5:
         raise ConfigError("poll_interval_seconds must be >= 5")

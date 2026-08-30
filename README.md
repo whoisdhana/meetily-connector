@@ -48,6 +48,11 @@ Behavior:
   generation reports **completed**; `trigger = "transcript"` fires as soon as
   the recording stops and the transcript is saved — no Meetily summary model
   needed (useful when the receiver does its own LLM pass anyway).
+- Optional cloud transcription: `transcriber = "gemini"` re-transcribes the
+  recording with Google Gemini Transcribe (speaker diarization, 85+ languages,
+  strong on code-mixed speech) and ships that instead of the local transcript,
+  falling back to local on any API failure. Audio is uploaded to Google for
+  this — the file is deleted from Google's storage right after transcription.
 - Skips trivial recordings (`min_duration_seconds`).
 - Durable outbox: if the receiver is down, payloads queue in the connector's own
   SQLite and retry with exponential backoff — forever by default for transient

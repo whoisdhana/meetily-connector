@@ -55,3 +55,14 @@ def test_trigger_validation(tmp_path):
     p.write_text("[watch]\ntrigger = 'sumary'\n")
     with pytest.raises(ConfigError, match="trigger must be"):
         load_config(p)
+
+
+def test_transcriber_validation(tmp_path):
+    p = tmp_path / "config.toml"
+    p.write_text('[transcribe]\ntranscriber = "gemini"\ngemini_language_codes = ["ta-IN", "en-IN"]\n')
+    cfg = load_config(p)
+    assert cfg.transcriber == "gemini"
+    assert cfg.gemini_language_codes == ["ta-IN", "en-IN"]
+    p.write_text('[transcribe]\ntranscriber = "whisper"\n')
+    with pytest.raises(ConfigError, match="transcriber must be"):
+        load_config(p)

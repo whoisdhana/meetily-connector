@@ -36,6 +36,28 @@ secret_keychain_service = "meetily-webhook"
 secret_keychain_account = ""
 secret_file = ""
 
+[transcribe]
+# "meetily" = use Meetily's local transcript as-is.
+# "gemini"  = re-transcribe the recording with Google Gemini Transcribe
+#             (better for non-English / code-mixed speech; needs an API key
+#             from https://aistudio.google.com/apikey). Falls back to the
+#             local transcript if the API call fails. The uploaded audio is
+#             deleted from Google's file storage after transcription.
+transcriber = "meetily"
+gemini_model = "gemini-3.5-transcribe"
+# [] = auto-detect (handles mid-session code-mixing). Or e.g. ["ta-IN", "en-IN"].
+gemini_language_codes = []
+# Speaker labels (spk_1/spk_2...) — auto-disabled for recordings over 30 min.
+gemini_diarization = true
+# Domain terms to bias recognition, e.g. product names.
+gemini_custom_vocabulary = []
+# API key source, same scheme as the webhook secret:
+gemini_key_source = "env"        # env | keychain | file
+gemini_key_env = "GEMINI_API_KEY"
+gemini_key_keychain_service = "gemini-api-key"
+gemini_key_keychain_account = ""
+gemini_key_file = ""
+
 [retry]
 base_seconds = 30
 max_seconds = 3600

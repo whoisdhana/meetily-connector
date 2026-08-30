@@ -24,8 +24,50 @@ TRUNCATION_MARKER = "\n[TRANSCRIPT TRUNCATED]"
 _ENVELOPE_HEADROOM = 20_000
 
 
+def _cloud_transcript(cfg: Config, meeting: MeetingRow, duration: float):
+    """Try Gemini transcription of the recording. None -> use local transcript."""
+    if cfg.transcriber != "gemini" or not meeting.folder_path:
+        return None
+    from .gemini_transcribe import TranscribeError, find_audio_file, transcribe_file
+
+    audio = find_audio_file(meeting.folder_path)
+    if audio is None:
+        log_event("transcribe.no_audio_file", meeting_id=meeting.id)
+        return None
+    try:
+        api_key = resolve_secret(
+            cfg.gemini_key_source,
+            env_var=cfg.gemini_key_env,
+            keychain_service=cfg.gemini_key_keychain_service,
+            keychain_account=cfg.gemini_key_keychain_account,
+            file_path=cfg.gemini_key_file,
+        )
+    except SecretError as exc:
+        log_event("transcribe.key_unavailable", error=str(exc))
+        return None
+    # Diarization caps audio at 30 min per request (API limit).
+    diarization = cfg.gemini_diarization and duration <= 1800
+    try:
+        result = transcribe_file(
+            audio, api_key,
+            model=cfg.gemini_model,
+            language_codes=list(cfg.gemini_language_codes),
+            diarization=diarization,
+            custom_vocabulary=list(cfg.gemini_custom_vocabulary),
+        )
+    except TranscribeError as exc:
+        log_event("transcribe.gemini_failed", meeting_id=meeting.id, error=str(exc))
+        return None
+    log_event("transcribe.gemini_ok", meeting_id=meeting.id,
+              chars=len(result.text), diarized=result.diarized)
+    return result
+
+
 def build_payload(cfg: Config, meeting: MeetingRow,
-                  transcript: str, duration: float) -> dict:
+                  transcript: str, duration: float,
+                  transcription_source: str = "meetily-local",
+                  transcription_model: str | None = None,
+                  diarized: bool = False) -> dict:
     budget = max(cfg.max_payload_bytes - _ENVELOPE_HEADROOM, 10_000)
     original_chars = len(transcript)
     truncated = False
@@ -59,6 +101,9 @@ def build_payload(cfg: Config, meeting: MeetingRow,
             "text": transcript,
             "truncated": truncated,
             "original_chars": original_chars,
+            "source": transcription_source,
+            "model": transcription_model,
+            "diarized": diarized,
         },
         "meetily_summary": {
             "status": meeting.summary_status,
@@ -108,7 +153,15 @@ def tick(cfg: Config, store: StateStore, dry_run: bool = False) -> int:
                     if not dry_run:
                         store.mark_skipped_trivial(meeting.id)
                     continue
-                payload = build_payload(cfg, meeting, transcript, duration)
+                cloud = _cloud_transcript(cfg, meeting, duration)
+                if cloud is not None:
+                    payload = build_payload(
+                        cfg, meeting, cloud.text, duration,
+                        transcription_source="gemini",
+                        transcription_model=cloud.model,
+                        diarized=cloud.diarized)
+                else:
+                    payload = build_payload(cfg, meeting, transcript, duration)
                 if dry_run:
                     print(json.dumps(payload, ensure_ascii=False, indent=2))
                 else:
