@@ -58,6 +58,14 @@ gemini_key_keychain_service = "gemini-api-key"
 gemini_key_keychain_account = ""
 gemini_key_file = ""
 
+[notes]
+# Local markdown archive: one file per meeting with an LLM summary, action
+# items, and the full transcript. Uses the same Gemini key as [transcribe].
+enabled = false
+dir = "~/Documents/MeetingNotes"
+summary_model = "gemini-3.5-flash-lite"
+language = "en"
+
 [retry]
 base_seconds = 30
 max_seconds = 3600

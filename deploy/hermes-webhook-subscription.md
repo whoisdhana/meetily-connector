@@ -157,6 +157,23 @@ hand-editing the subscription in `~/.hermes/webhook_subscriptions.json`
 "meetily-meeting": { ..., "toolsets": ["hermesnag"] }
 ```
 
+## 4b. Deliver summaries to Telegram (optional, recommended)
+
+By default the route has `deliver: "log"` — the agent's summary goes to the
+gateway log only. To get it as a Telegram message, edit
+`~/.hermes/webhook_subscriptions.json` and set on the route:
+
+```json
+"deliver": "telegram"
+```
+
+No `deliver_extra` needed: the gateway falls back to the Telegram **home
+channel** (`TELEGRAM_HOME_CHANNEL` in `~/.hermes/.env`), i.e. the owner's DM.
+Long messages are split automatically; markdown renders. Do NOT set
+`deliver_only` (that would post the raw transcript prompt instead of the
+summary). Routes hot-reload — no gateway restart. Remember the update footgun:
+re-check `toolsets` after any `hermes webhook subscribe` re-run.
+
 ## 5. Smoke test
 
 Signed sample POST (2xx proves auth + routing; `202 accepted` = agent run queued):

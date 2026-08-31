@@ -69,6 +69,12 @@ class Config:
     gemini_key_keychain_account: str = ""
     gemini_key_file: str = ""
 
+    # [notes] — optional local markdown archive of each processed meeting.
+    notes_enabled: bool = False
+    notes_dir: str = "~/Documents/MeetingNotes"
+    notes_summary_model: str = "gemini-3.5-flash-lite"
+    notes_language: str = "en"
+
     # [retry]
     retry_base_seconds: int = 30
     retry_max_seconds: int = 3600
@@ -127,6 +133,12 @@ _SECTION_KEYS = {
         "gemini_key_keychain_service": "gemini_key_keychain_service",
         "gemini_key_keychain_account": "gemini_key_keychain_account",
         "gemini_key_file": "gemini_key_file",
+    },
+    "notes": {
+        "enabled": "notes_enabled",
+        "dir": "notes_dir",
+        "summary_model": "notes_summary_model",
+        "language": "notes_language",
     },
     "retry": {
         "base_seconds": "retry_base_seconds",
@@ -203,6 +215,8 @@ def _validate(cfg: Config) -> None:
         raise ConfigError(
             f"gemini_key_source must be env|keychain|file, got {cfg.gemini_key_source!r}"
         )
+    if cfg.notes_enabled and not cfg.notes_dir.strip():
+        raise ConfigError("[notes] dir must be non-empty when notes are enabled")
     if cfg.poll_interval_seconds < 5:
         raise ConfigError("poll_interval_seconds must be >= 5")
     if cfg.max_payload_bytes < 10_000:

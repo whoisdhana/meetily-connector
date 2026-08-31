@@ -48,6 +48,10 @@ Behavior:
   generation reports **completed**; `trigger = "transcript"` fires as soon as
   the recording stops and the transcript is saved — no Meetily summary model
   needed (useful when the receiver does its own LLM pass anyway).
+- Optional notes archive: `[notes] enabled = true` writes a markdown file per
+  meeting (`~/Documents/MeetingNotes/<date>-<title>.md`) with an LLM-generated
+  summary + action items and the full transcript — best-effort, never blocks
+  delivery, works even when the webhook receiver is down.
 - Optional cloud transcription: `transcriber = "gemini"` re-transcribes the
   recording with Google Gemini Transcribe (speaker diarization, 85+ languages,
   strong on code-mixed speech) and ships that instead of the local transcript,

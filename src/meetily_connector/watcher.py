@@ -166,6 +166,17 @@ def tick(cfg: Config, store: StateStore, dry_run: bool = False) -> int:
                     print(json.dumps(payload, ensure_ascii=False, indent=2))
                 else:
                     store.enqueue(meeting.id, payload)
+                    if cfg.notes_enabled:
+                        from .notes import write_notes
+
+                        # Full untruncated transcript: truncation is a
+                        # payload-budget concern, not a notes concern.
+                        text = cloud.text if cloud is not None else transcript
+                        write_notes(
+                            cfg, meeting, text, duration,
+                            source="gemini" if cloud else "meetily-local",
+                            model=cloud.model if cloud else None,
+                            diarized=cloud.diarized if cloud else False)
                 detected += 1
     except DatabaseBusy:
         log_event("tick.skipped_db_busy")
