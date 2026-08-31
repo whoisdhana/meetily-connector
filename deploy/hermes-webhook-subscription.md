@@ -63,8 +63,11 @@ secret_keychain_account = "meetily"
 
 ## 3. Subscribe the route
 
-**Footgun:** re-running `hermes webhook subscribe` WITHOUT `--secret` rotates the
-secret and silently breaks the running watcher. Always pass `--secret` explicitly:
+**Footguns:** (a) re-running `hermes webhook subscribe` WITHOUT `--secret`
+rotates the secret and silently breaks the running watcher — always pass
+`--secret` explicitly. (b) every subscribe/update REWRITES the subscription and
+drops hand-edited keys (`toolsets`, `profile`) — re-add them to
+`webhook_subscriptions.json` after any prompt update (step 4).
 
 ```sh
 hermes webhook subscribe meetily-meeting \

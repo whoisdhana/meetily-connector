@@ -24,6 +24,7 @@ _MIME_BY_EXT = {
     ".wav": "audio/wav",
     ".mp3": "audio/mp3",
     ".m4a": "audio/mp4",
+    ".mp4": "audio/mp4",  # Meetily saves recordings as audio.mp4 (AAC)
     ".aac": "audio/aac",
     ".flac": "audio/flac",
     ".ogg": "audio/ogg",
