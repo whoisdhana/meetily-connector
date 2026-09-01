@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.meetily.connector</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__PYTHON__</string>
+        <string>-m</string>
+        <string>meetily_connector.cli</string>
+        <string>watch</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>__HOME__/.meetily-connector</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>PYTHONPATH</key>
+        <string>__PYTHONPATH__</string>
+    </dict>
+    <key>LimitLoadToSessionType</key>
+    <array>
+        <string>Aqua</string>
+        <string>Background</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <!-- Raise launchd's 10s default so a crash loop can't respawn-storm. -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    <key>ExitTimeOut</key>
+    <integer>25</integer>
+    <key>StandardOutPath</key>
+    <string>__HOME__/.meetily-connector/logs/watch.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.meetily-connector/logs/watch.error.log</string>
+</dict>
+</plist>

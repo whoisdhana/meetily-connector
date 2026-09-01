@@ -25,3 +25,6 @@ dev = ["pytest>=8"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+meetily_connector = ["templates/*.plist"]

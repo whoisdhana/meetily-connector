@@ -44,10 +44,58 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("status", help="show connector status")
 
+    sub.add_parser("smoke", help="send a signed synthetic test payload to the "
+                                 "configured webhook and report the result")
+
     replay = sub.add_parser("replay", help="re-enqueue a meeting")
     replay.add_argument("meeting_id")
 
     return parser
+
+
+def run_smoke(cfg) -> int:
+    """Signed synthetic POST through the configured webhook_url."""
+    from datetime import datetime, timezone
+
+    from .secrets import SecretError, resolve_secret
+    from .webhook import deliver
+
+    cfg.validate_webhook_url()
+    try:
+        secret = resolve_secret(
+            cfg.secret_source,
+            env_var=cfg.secret_env,
+            keychain_service=cfg.secret_keychain_service,
+            keychain_account=cfg.secret_keychain_account,
+            file_path=cfg.secret_file,
+        )
+    except SecretError as exc:
+        print(f"smoke: cannot resolve webhook secret: {exc}", file=sys.stderr)
+        return 2
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    payload = {
+        "event": "meeting.completed",
+        "version": 1,
+        "meeting": {"id": f"smoke-{now}", "title": "Connector smoke test",
+                     "created_at": now, "duration_seconds": 61},
+        "transcript": {"text": "This is an automated installer smoke test. "
+                                "No decisions, no action items.",
+                        "truncated": False, "original_chars": 74,
+                        "source": "smoke", "model": None, "diarized": False},
+        "meetily_summary": {"status": None, "result": None},
+        "connector": {"name": "meetily-connector", "sent_at": now},
+    }
+    result = deliver(cfg.webhook_url, secret, payload, cfg.allow_insecure_transport)
+    if result.ok:
+        print(f"smoke: OK — receiver answered {result.http_status} "
+              f"({'agent run accepted' if result.http_status == 202 else 'delivered'})")
+        return 0
+    print(f"smoke: FAILED — status={result.http_status} error={result.error}",
+          file=sys.stderr)
+    if result.http_status == 401:
+        print("smoke: 401 = HMAC secret mismatch between this Mac's Keychain "
+              "and the box route. Re-run the secret/route step.", file=sys.stderr)
+    return 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -76,6 +124,8 @@ def main(argv: list[str] | None = None) -> int:
             from .install import run_status
 
             return run_status(cfg)
+        if args.command == "smoke":
+            return run_smoke(cfg)
         if args.command == "replay":
             from .outbox import run_replay
 

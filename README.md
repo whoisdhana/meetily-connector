@@ -11,12 +11,25 @@ its SQLite database (strictly read-only) and exposes the data two ways:
 | `meetily-mcp serve` | stdio MCP server: `list_meetings`, `get_transcript`, `search_meetings`, … | Any MCP-capable agent (Claude, Hermes, …) that should browse meetings on demand |
 | `meetily-mcp watch` | Daemon: when a meeting's summary completes, POST a signed `meeting.completed` JSON payload to a webhook you configure | Automations that should react to every finished meeting without being asked |
 
-## Install
+## Install for the Hermes stack (guided)
+
+If you run a [Hermes agent](https://hermes.chat) on a server, one command sets
+up the whole pipeline — Meetily, transcription, notes, the SSH tunnel, and the
+webhook route on your box (with confirmation before any server write):
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/whoisdhana/meetily-connector/main/setup.sh)"
+```
+
+Idempotent (safe to re-run), with a `--check-only` dry-run mode. Full guide,
+prerequisites, and a manual fallback for every step: [SETUP.md](SETUP.md).
+
+## Install (library only)
 
 Python 3.11+, no dependencies:
 
 ```sh
-pip install meetily-connector      # or: pipx install meetily-connector
+pip install "git+https://github.com/whoisdhana/meetily-connector"
 meetily-mcp init                   # writes ~/.meetily-connector/config.toml
 ```
 

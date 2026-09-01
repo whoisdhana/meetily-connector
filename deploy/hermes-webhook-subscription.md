@@ -1,5 +1,10 @@
 # Example deployment: Meetily → Hermes agent → HermesNag
 
+> **Automated:** `setup.sh` (see [SETUP.md](../SETUP.md)) performs everything
+> below interactively. This document remains as the reference for what it does
+> and why. The route's prompt now lives in `src/meetily_connector/route.py`
+> (single source of truth); the prompt text below may drift.
+
 This walks through wiring the watcher into a [Hermes](https://hermes.chat) agent
 so that every finished meeting gets an LLM pass (transcript cleanup + action-item
 extraction) and the extracted tasks land in a task store the agent can write to.
