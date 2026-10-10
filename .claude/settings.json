@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(./deploy/config.example.toml)",
+      "Bash(.venv/bin/pip install -e .[dev])",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(.venv/bin/meetily-mcp --help)",
+      "Bash(bash -n setup.sh)",
+      "Bash(git diff --check)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./**/.env)",
+      "Read(./**/.env.local)",
+      "Read(./**/.env.*.local)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/secrets/**)",
+      "Read(~/.meetily-connector/**)",
+      "Read(~/Library/Application Support/com.meetily*/**)",
+      "Read(~/.hermes/.env*)",
+      "Read(~/.hermes/auth.json)",
+      "Read(~/.hermes/profiles/*/.env*)",
+      "Read(~/.hermes/profiles/*/auth.json)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.ssh/**)",
+      "Bash(cat .env*)",
+      "Bash(./setup.sh:*)",
+      "Bash(bash setup.sh:*)",
+      "Bash(security find-generic-password:*)",
+      "Bash(launchctl:*)",
+      "Bash(git push origin main:*)",
+      "Bash(gh pr merge:*)"
+    ]
+  }
+}
